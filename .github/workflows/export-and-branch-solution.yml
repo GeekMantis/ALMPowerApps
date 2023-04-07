@@ -1,0 +1,54 @@
+# Export solution from Development environment
+# unpackage the solution, prepare, commit the components and push to git branch with changes
+
+# This is a comment that provides a brief description of what the workflow does.
+
+on:
+  workflow_dispatch: # This specifies when the workflow should run.
+
+jobs:
+  export-from-dev: # This is the name of the job that will be executed.
+
+    runs-on: windows-latest # This specifies the operating system that will be used to run the job.
+
+    env:
+      RUNNER_DEBUG: 1 # This sets an environment variable that will be used in this job.
+
+    steps: # This is a list of steps that will be executed in the job.
+
+      - uses: actions/checkout@v2 # This step checks out the code from the repository.
+        with:
+          lfs: true # This specifies that large files should be downloaded using Git LFS.
+
+      - name: who-am-i action # This step runs the 'who-am-i' action from the powerplatform-actions repository.
+        uses: microsoft/powerplatform-actions/who-am-i@v0
+        with:
+          environment-url: 'https://org1b463a41.crm.dynamics.com'
+          user-name: 'LynneR@ym1xw.onmicrosoft.com'
+          password-secret: ${{ secrets.password }} # This sets a secret variable that contains the password.
+
+      - name: export-solution action # This step runs the 'export-solution' action from the powerplatform-actions repository.
+        uses: microsoft/powerplatform-actions/export-solution@v0
+        with:
+          environment-url: 'https://org1b463a41.crm.dynamics.com'
+          user-name: 'LynneR@ym1xw.onmicrosoft.com'
+          password-secret: ${{ secrets.password }} # This sets a secret variable that contains the password.
+          solution-name: ALM Test Solution # This specifies the name of the solution to export.
+          solution-output-file: out/exported/ALMTestSolution.zip # This specifies the output file for the exported solution.
+
+      # This step runs the 'unpack-solution' action from the powerplatform-actions repository.
+      - name: unpack-solution action 
+        uses: microsoft/powerplatform-actions/unpack-solution@v0
+        with:
+          solution-file: out/exported/ALMTestSolution.zip # This specifies the input file for the unpacked solution.
+          solution-folder: out/solutions/ALMPowerAPP # This specifies the output folder for the unpacked solution.
+          solution-type: 'Unmanaged' # This specifies the type of the solution.
+          overwrite-files: true # This specifies whether to overwrite existing files.
+
+      - name: branch-solution, prepare it for a PullRequest # This step runs the 'branch-solution' action from the powerplatform-actions repository.
+        uses: microsoft/powerplatform-actions/branch-solution@v0
+        with:
+          solution-folder: out/solutions/ALMPowerAPP # This specifies the input folder for the solution to branch.
+          solution-target-folder: solutions/ALMPowerAPP # This specifies the target folder for the branched solution.
+          repo-token: ${{ secrets.GITHUB_TOKEN }} # This sets a secret variable that contains the GitHub token.
+          allow-empty-commit: true # This specifies whether to allow an empty commit.
